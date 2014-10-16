@@ -1,4 +1,4 @@
 bgmenu
-======
+===========
 
-Menu for the webmastering
+Provide a custom menu editor for the client

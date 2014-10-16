@@ -1,0 +1,290 @@
+<?php
+
+/**
+ * Implements hook_help().
+ */
+function bgmenu_help($path, $arg) {
+  if ($path == 'admin/help#bgmenu') {
+    return '<p>' . t('This module prodive a custom client menu editing') . '</p>';
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function bgmenu_menu() {
+
+  $items = array();
+  
+  $items['admin/config/user-interface/bgmenu'] = array(
+    'title' => t('Bg menu'),
+    'description' => t('A custom menu editing'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bgmenu_admin_settings'),
+    'access arguments' => array('administer bgmenu'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'bgmenu.admin.inc',
+  );
+  
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function bgmenu_permission() {
+  return array(
+    'administer bgmenu' => array(
+      'title' => t('Administer bgmenu'),
+      'description' => t('Manage permission for bgmenu module'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_enable().
+ */
+function bgmenu_enable() {
+
+  variable_set('bgmenu_roles', array());
+  variable_set('bgmenu_cts', array());
+  variable_set('bgmenu_taxos', array());
+  variable_set('bgmenu_menus', array());
+  variable_set('bgmenu_users', array());
+
+  $menu1 = array(
+    'menu_name' => 'bgmenu-menu1',
+    'title' => t('First bgmenu'),
+    'description' => t('First bgmenu to display'),
+  );
+
+  menu_save($menu1);
+
+  $menu2 = array(
+    'menu_name' => 'bgmenu-menu2',
+    'title' => t('Second bgmenu'),
+    'description' => t('Second bgmenu to display'),
+  );
+
+  menu_save($menu2);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function bgmenu_disable() {
+
+  variable_del('bgmenu_roles');
+  variable_del('bgmenu_cts');
+  variable_del('bgmenu_taxos');
+  variable_del('bgmenu_menus');
+  variable_del('bgmenu_users');
+
+  $menu1 = array(
+    'menu_name' => 'bgmenu-menu1',
+    'title' => t('First bgmenu'),
+    'description' => t('First bgmenu to display'),
+  );
+
+  menu_delete($menu1);
+
+  $menu2 = array(
+    'menu_name' => 'bgmenu-menu2',
+    'title' => t('Second bgmenu'),
+    'description' => t('Second bgmenu to display'),
+  );
+
+  menu_delete($menu2);
+}
+
+function get_bgmenu_list_ct() {
+  $content = array();
+
+  foreach (node_type_get_types() as $key => $value) {
+    $content[] = $value->type;
+  }
+
+  return $content;
+}
+
+function get_bgmenu_cts(){
+  $content = '';
+
+  $bgmenu_cts = variable_get('bgmenu_cts');
+
+  if(!empty($bgmenu_cts)) {
+    $content = '<li class="niv1">
+      <span class="niv1">'.t('Add content').'</span>
+        <ul>';
+    $list_node_types = node_type_get_types();
+
+    foreach ($bgmenu_cts as $key => $value) {
+      
+      if(!empty($value) || $value != 0) {
+
+        $url = 'node/add/'.str_replace('_', '-', $value);
+        
+        if(drupal_valid_path($url)) {
+          $content .= '<li>'.l(t($list_node_types[$value]->name), $url, array('absolute' => TRUE)).'</li>';
+        }
+      }
+    }
+    $content .= '</ul></li>';
+  }
+
+  return $content;
+}
+
+
+function get_bgmenu_menus () {
+  $content = '';
+
+  $bgmenu_menus = variable_get('bgmenu_menus');
+
+  if(!empty($bgmenu_menus)) {
+    $infos = '';
+    foreach ($bgmenu_menus as $key => $value) {
+      if(!empty($value) || $value != 0) {
+        $url = 'admin/structure/menu/manage/'.$value;
+        if(drupal_valid_path($url)) {
+          $menu_item = menu_load($value);
+          $infos .= '<li>'.l(t($menu_item['title']), $url, array('absolute' => TRUE)).'</li>';
+        }
+      }
+    }
+    if(!empty($infos)) {
+      $content = '
+        <li class="niv1">
+          <span class="niv1">'.t('List menu').'</span>
+          <ul>'.$infos.'</ul>
+        </li>'; 
+    }
+  }
+  return $content;
+}
+
+function get_bgmenu_taxos () {
+  $content = '';
+
+  $bgmenu_taxos = variable_get('bgmenu_taxos');
+
+  if(!empty($bgmenu_taxos)) {
+    $infos = '';
+    foreach ($bgmenu_taxos as $key => $value) {
+      if(!empty($value) || $value != 0) {
+
+        $url = 'admin/structure/taxonomy/'.$value;
+
+        if(drupal_valid_path($url)) {
+          $infos .= '<li>'.l(t(taxonomy_vocabulary_machine_name_load($value)->name), $url, array('absolute' => TRUE)).'</li>';
+        }
+      }
+    }
+    if(!empty($infos)) {
+      $content = '<li class="niv1">
+      <span class="niv1">'.t('Edit taxonomies').'</span>
+        <ul>'.$infos.'</ul></li>';
+    }
+  }
+
+  return $content;
+}
+
+function get_bgmenu_menu1() {
+  $content = '';
+
+
+  $menu1 = menu_block_view('bgmenu-menu1');
+  if(!empty($menu1['content'])) {
+    $block_menu1 = module_invoke('menu', 'block_view', 'bgmenu-menu1');
+    $menu1 = render($block_menu1['content']);
+    if(!empty($menu1)) {
+      $content = '<li class="niv1"><span class="niv1">'.t('Bgmenu1 title').'</span>' . $menu1 . '</li>';
+    }
+  }
+  
+  return $content;
+}
+
+function get_bgmenu_menu2() {
+  $content = '';
+
+  $menu2 = menu_block_view('bgmenu-menu2');
+  if(!empty($menu2['content'])) {
+    $block_menu2 = module_invoke('menu', 'block_view', 'bgmenu-menu2');
+    $menu2 = render($block_menu2['content']);
+    if(!empty($menu2)) {
+      $content = '<li class="niv1"><span class="niv1">'.t('More links').'</span>' . $menu2 . '</li>';
+    }
+  }
+
+  return $content;
+}
+
+function get_bgmenu() {
+  global $user;
+
+  $content = '';
+  $user_roles = $user->roles;
+  $bgmenu_roles = variable_get('bgmenu_roles');
+  $acces_menu = 'no';
+  foreach ($user_roles as $key => $user_role) {
+    if(!empty($bgmenu_roles[$user_role])) { $acces_menu = 'yes'; }
+  }
+  if($acces_menu == "yes") {
+    $url = 'admin/config/user-interface/bgmenu';
+
+    if(drupal_valid_path($url)) {
+      $btn_home = '<li class="bgmenu-home">' . l('', $url, array('absolute' => TRUE)) . '</li>';
+    }
+    else {
+      $btn_home = '<li class="bgmenu-home">' . l('', '<front>', array('absolute' => TRUE)) . '</li>';
+    }
+  
+    if (in_array('contributeur programme', $user->roles)) {
+      $link_account = '';
+    }
+    else {
+      $link_account = '<li class="niv1">'.l(t('My account'), 'user').'</li>';
+    }
+    $content = '
+      <div id="bgmenu">
+        <div class="content">
+          <ul class="main clearfix">'.
+            $btn_home.
+            get_bgmenu_cts().
+            get_bgmenu_menu1().
+            get_bgmenu_taxos().
+            get_bgmenu_menus().
+            get_bgmenu_menu2().
+            $link_account.
+            '<li class="niv1">'.l(t('Log out'), 'user/logout').'</li>'.
+          '</ul>
+        </div>
+      </div>';
+    
+    drupal_add_css(drupal_get_path('module', 'bgmenu') . '/assets/css/bgmenu.css', array('media' => 'all', 'group' => CSS_DEFAULT, 'every_page' => TRUE, 'weight' => 0));
+    drupal_add_js('jQuery(document).ready(function () {
+      (function($) {
+        $("#bgmenu li").mouseenter(function(){
+          $(this).addClass("on");
+          $(this).children("ul").fadeIn(400);
+        }).mouseleave(function(){
+          $(this).removeClass("on");
+          $(this).children("ul").fadeOut(400);
+        });
+      })(jQuery);
+    });', array('type' => 'inline', 'weight' => 0));
+  }
+
+  return $content;
+}
+
+/**
+ * Implements hook_page_build().
+ */
+function bgmenu_page_build(&$page){
+  if(user_is_logged_in()) {
+    $page['page_top']['bgmenu'] = array('#markup' => get_bgmenu());
+  }
+}
