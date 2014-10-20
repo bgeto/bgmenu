@@ -51,6 +51,8 @@ function bgmenu_enable() {
   variable_set('bgmenu_taxos', array());
   variable_set('bgmenu_menus', array());
   variable_set('bgmenu_users', array());
+  variable_set('bgmenu_logo', array());
+  variable_set('bgmenu_css', array());
 
   $menu1 = array(
     'menu_name' => 'bgmenu-menu1',
@@ -79,6 +81,8 @@ function bgmenu_disable() {
   variable_del('bgmenu_taxos');
   variable_del('bgmenu_menus');
   variable_del('bgmenu_users');
+  variable_del('bgmenu_logo');
+  variable_del('bgmenu_css');
 
   $menu1 = array(
     'menu_name' => 'bgmenu-menu1',
@@ -233,12 +237,21 @@ function get_bgmenu() {
   }
   if($acces_menu == "yes") {
     $url = 'admin/config/user-interface/bgmenu';
-
+    $customsLogo = variable_get('bgmenu_logo');
+    if(!empty($customsLogo)) {
+      $logoInfos = file_load($customsLogo);
+      $logoPath = file_create_url($logoInfos->uri);
+    }
+    else { $logoPath = base_path() . drupal_get_path('module', 'bgmenu') . '/assets/images/bgmenu-home.png'; }
     if(drupal_valid_path($url)) {
-      $btn_home = '<li class="bgmenu-home">' . l('', $url, array('absolute' => TRUE)) . '</li>';
+      $btn_home = '<li class="bgmenu-home">
+        <a href="'.$url.'"><img src="'.$logoPath.'" width="20" height="20"></a>' . 
+      '</li>';
     }
     else {
-      $btn_home = '<li class="bgmenu-home">' . l('', '<front>', array('absolute' => TRUE)) . '</li>';
+      $btn_home = '<li class="bgmenu-home">
+        <a href="'.$url.'"><img src="'.$logoPath.'" width="20" height="20"></a>' . 
+      '</li>';
     }
   
     if (in_array('contributeur programme', $user->roles)) {
@@ -264,6 +277,10 @@ function get_bgmenu() {
       </div>';
     
     drupal_add_css(drupal_get_path('module', 'bgmenu') . '/assets/css/bgmenu.css', array('media' => 'all', 'group' => CSS_DEFAULT, 'every_page' => TRUE, 'weight' => 0));
+
+    if(!empty(variable_get('bgmenu_css', array()))) {
+      drupal_add_css(variable_get('bgmenu_css', array()),$option['type'] = 'inline');
+    }
     drupal_add_js('jQuery(document).ready(function () {
       (function($) {
         $("#bgmenu li").mouseenter(function(){

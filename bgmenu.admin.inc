@@ -11,7 +11,7 @@
 
 
 function bgmenu_admin_settings($form, &$form_state) {
-
+  
   drupal_set_title('Bg Menu configuration');
   // List roles
   $liste_roles = user_roles();
@@ -118,5 +118,51 @@ function bgmenu_admin_settings($form, &$form_state) {
     '#weight' => 6,
   );
 
+  $form['bgmenu_logo'] = array(
+    '#type' => 'managed_file',
+    '#title' => t('Logo customs'),
+    '#title_display' => 'invisible',
+    '#default_value' => variable_get('bgmenu_logo'),
+    '#size' => 60,
+    '#theme_wrappers' => array(),
+    '#description' => t('Upload a file, allowed extensions: jpg jpeg gif png'),
+    '#weight' => 7,
+  );
+
+  $form['bgmenu_css'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Customs css'),
+    '#default_value' => variable_get('bgmenu_css', array()),
+    '#weight' => 8,
+  );
+
+  $form['#submit'][] = 'bgmenu_submit';
+
   return system_settings_form($form);
+}
+
+function bgmenu_submit($form ,&$form_state){
+  global $user;
+  /*
+  $save = file_save_upload('bgmenu_logo', $validators = array());
+  if($save) {
+    $save = file_move($save, 'public://', FILE_EXISTS_RENAME);
+    if($save) {
+      variable_set('bgmenu_logo', $save->filename);
+      drupal_set_message('Le fichier: <strong>"' . $save->filename . '"</strong> est bien sur le serveur');
+    }
+  }
+  */
+  
+  // Load the file via file.fid.
+  $file = file_load($form_state['values']['bgmenu_logo']);
+  // Change status to permanent.
+  $file->status = FILE_STATUS_PERMANENT;
+  $file = file_move($file, 'public://', FILE_EXISTS_RENAME);
+  if($save) {
+    file_save($file);
+    variable_set('bgmenu_logo', $file->filename);
+    // Record that the module (in this example, user module) is using the file. 
+    file_usage_add($file, 'user', 'user', $user->uid);
+  }
 }
