@@ -277,9 +277,10 @@ function get_bgmenu() {
       </div>';
     
     drupal_add_css(drupal_get_path('module', 'bgmenu') . '/assets/css/bgmenu.css', array('media' => 'all', 'group' => CSS_DEFAULT, 'every_page' => TRUE, 'weight' => 0));
+    $bgmenuCss = variable_get('bgmenu_css', array());
 
-    if(!empty(variable_get('bgmenu_css', array()))) {
-      drupal_add_css(variable_get('bgmenu_css', array()),$option['type'] = 'inline');
+    if(!empty($bgmenuCss)) {
+      drupal_add_css($bgmenuCss ,$option['type'] = 'inline');
     }
     drupal_add_js('jQuery(document).ready(function () {
       (function($) {
